@@ -6,3 +6,5 @@
 *.xlsx
 troubleshooting/*
 dask-worker-space/*
+data/*
+troubleshooting/*
