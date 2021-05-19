@@ -5,6 +5,7 @@ from datetime import datetime
 from dateutil import parser as dateparser
 from pandas.api.types import is_string_dtype
 from pandas.api.types import is_numeric_dtype
+import numpy as np
 
 parser_dict = {
     "csv":pd.read_csv,
@@ -149,10 +150,21 @@ def filter_data(file_path,latitude,longitude,radius,distance_unit,queries,save_a
                 longitude_col = longitude_col[0]
             else:
                 raise Exception(f"found {len(longitude_col)} longitude columns")
-        row_count += len(df_chunk)
-        data_coords = list(zip(df_chunk[latitude_col],df_chunk[longitude_col]))
-        distance = [haversine(d,query_coords,unit=distance_unit) for d in data_coords]
-        df = df_chunk.copy(deep=True)
+        valid_entries = list()
+        for lon,lat in zip(pd.to_numeric(df_chunk[longitude_col],errors="coerce"),pd.to_numeric(df_chunk[latitude_col],errors="coerce")):
+            valid_entries.append(isinstance(lon,float) and isinstance(lat,float))
+        # df_chunk = df_chunk[valid_entries]
+        filtered_chunk = df_chunk[valid_entries]
+        row_count += len(filtered_chunk)
+        data_coords = list(zip(pd.to_numeric(filtered_chunk[latitude_col],errors="coerce"),pd.to_numeric(filtered_chunk[longitude_col],errors="coerce")))
+        distance = list()
+        for d in data_coords:
+            try:
+                distance.append(haversine(d,query_coords,unit=distance_unit))
+            except:
+                print(d)
+        # distance = [haversine(d,query_coords,unit=distance_unit) for d in data_coords]
+        df = filtered_chunk.copy(deep=True)
         df.insert(0,f"Haversine Distance ({distance_unit})",distance)
         df = df[df[f"Haversine Distance ({distance_unit})"]<=radius]
         result_df_list.append(df.copy(deep=True))

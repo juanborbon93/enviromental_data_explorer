@@ -19,7 +19,7 @@ datatype_query_map = {
 }
 
 def query_form(columns,dataset_path,dataset_info):
-    parser = get_parser(dataset_path)
+    parser,args = get_parser(dataset_path)
     df = parser(dataset_path,nrows=50)
     type_dict = dataset_info["column_types"] #get_type_dict(df)
     col_analysis = dataset_info["col_analysis"]
